@@ -1,0 +1,59 @@
+@*
+* This template is called from the `index` template. This template
+* handles the rendering of the page header and body tags. It takes
+* two arguments, a `String` for the title of the page and an `Html`
+* object to insert into the body of the page.
+*@
+@(title: String)(lang: Lang)(content: Html)(implicit flash: Flash, messagesProvider: MessagesProvider)
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>@title</title>
+        <link rel="stylesheet" type="text/css" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
+        <link rel="stylesheet" type="text/css" media="screen" href="@routes.Assets.at("stylesheets/main.css")">
+        <link rel="stylesheet" type="text/css" media="screen" href="@routes.Assets.at("stylesheets/bootstrap.min.css")">
+    </head>
+    <body>
+        <div class="screenshot">
+            <div class="navbar navbar-fixed-top">
+                <div class="navbar-inner">
+                    <div class="container">
+                        <a class="brand" href="@routes.HomeController.index()">
+                        @Messages("application.name")
+                        </a>
+                        <ul class="nav">
+                            <li class="divider-vertical"></li>
+                            <li class="active">
+                                <a href="@routes.HomeController.product()">
+                                @Messages("products.list.navigation")
+                                </a>
+                            </li>
+                            <li class="active">
+                                <a href="@routes.HomeController.addProduct()">
+                                    <i class="icon-plus icon-white"></i>
+                                    @Messages("products.new.command")
+                                </a>
+                            </li>
+                            <li class="divider-vertical"></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="container">
+                @if(flash.get("success").isDefined) {
+                    <div class="alert alert-success">
+                    @flash.get("success")
+                    </div>
+                }
+                @if(flash.get("error").isDefined) {
+                    <div class="alert alert-error">
+                    @flash.get("error")
+                    </div>
+                }
+                @content
+                @debug(lang)
+            </div>
+        </div>
+    </body>
+</html>
+

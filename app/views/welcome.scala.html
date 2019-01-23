@@ -1,0 +1,9 @@
+@(products: List[model.Product])(implicit messagesProvider: MessagesProvider, lang: Lang, flash: Flash)
+    @main(Messages("application.name"))(lang) {
+        <dl class="products">
+        @for(product <- products) {
+            <dt>@product.name</dt>
+            <dd>@product.description</dd>
+        }
+        </dl>
+    }

@@ -1,0 +1,7 @@
+@import com.typesafe.config.ConfigFactory
+@(implicit lang: Lang)
+<footer>
+    lang = @lang.code,
+    user = @play.api.Play.current.configuration.get[String]("environment.user"),
+    date = @(new java.util.Date().format("yyyy-MM-dd HH:mm"))
+</footer>
