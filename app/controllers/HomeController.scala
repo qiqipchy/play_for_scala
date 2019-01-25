@@ -15,6 +15,8 @@ import play.api.data.Form
 import play.api.libs.json._
 import play.api.libs.ws.WSClient
 import play.cache.CacheApi
+import play.mvc.Http
+import play.mvc.Http.HeaderNames
 
 import scala.concurrent.Future
 
@@ -33,6 +35,55 @@ class HomeController @Inject()(cache: AsyncCacheApi, components: ControllerCompo
     }
 
     implicit def lang = supportedLangs.availables.head
+
+    def AuthenticatedAction(body: Request[_] => Result) = Action {
+        request =>
+            val authenticate = (HeaderNames.WWW_AUTHENTICATE, "Basic")
+
+            readBasicAuthentication(request.headers) match {
+                case None => Unauthorized.withHeaders(authenticate)
+                case Some(Left(status)) => status
+                case Some(Right((user, pwd))) =>
+                    if (user == pwd) body(request)
+                    else Unauthorized
+            }
+    }
+
+    import org.apache.commons.codec.binary.Base64
+
+    def readBasicAuthentication(headers: Headers): Option[Either[Result, (String, String)]] = {
+        headers.get(Http.HeaderNames.AUTHORIZATION).map { header =>
+            val BasicHeader = "Basic (.*)".r
+            header match {
+                case BasicHeader(base64) => {
+                    try {
+                        val decodedBytes = Base64.decodeBase64(base64.getBytes)
+                        val credentials = new String(decodedBytes).split(":", 2)
+                        credentials match {
+                            case Array(username, password) =>
+                                Right(username -> password)
+                            case _ => Left(Unauthorized("Invalid basic authentication"))
+                        }
+                    }
+                }
+                case _ => Left(BadRequest("Bad Authorization header"))
+            }
+        }
+    }
+
+    def readQueryString(request: Request[_]): Option[Either[Result, (String, String)]] = {
+        request.queryString.get("user").map { user =>
+            request.queryString.get("password").map { password =>
+                Right((user.head, password.head))
+            }.getOrElse {
+                Left(BadRequest("Password not specified"))
+            }
+        }
+    }
+
+    def index = AuthenticatedAction { request =>
+        Ok(views.html.index())
+    }
 
     def Authenticated[A](action: Action[A]): Action[A] = Action(action.parser).async { request =>
         if (System.currentTimeMillis % 2 == 0) action(request)
@@ -60,9 +111,6 @@ class HomeController @Inject()(cache: AsyncCacheApi, components: ControllerCompo
       * will be called when the application receives a `GET` request with
       * a path of `/`.
       */
-    def index = Action { implicit request =>
-        Ok(views.html.index())
-    }
 
     import scala.concurrent.ExecutionContext.Implicits.global
 
